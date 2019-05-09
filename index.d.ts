@@ -1,4 +1,4 @@
-import React, { StatelessComponent, ComponentClass, ClassicComponentClass, Children } from "react";
+import React from "react";
 
 type MutationSubscription = {
   when: string | RegExp;
@@ -13,32 +13,33 @@ type MutationHandlerPayload = {
   refresh: () => void;
 };
 
-type QueryPacket = [string, any, any];
-type MutationPacket = [string, any];
+type QueryPacket = [string, any, BuildQueryOptions];
 
-export type QueryPayload = {
+type MutationPacket = [string, BuildQueryOptions];
+
+type QueryPayload<Data = any, Error = any> = {
   loading: boolean;
   loaded: boolean;
-  data: any;
-  error: any;
+  data: Data;
+  error: Error;
   currentQuery: string;
   reload: () => void;
   clearCache: () => void;
   clearCacheAndReload: () => void;
 };
 
-export type MutationPayload = {
+type MutationPayload<Response = any> = {
   running: boolean;
   finished: boolean;
-  runMutation: (variables: any) => Promise<any>;
+  runMutation: (variables: any) => Promise<Response>;
 };
 
 export class Cache {
   constructor(cacheSize?: number);
   entries: [string, any][];
-  get(key): any;
-  set(key, results): void;
-  delete(key): void;
+  get(key: string): any;
+  set(key: string, results: any): void;
+  delete(key: string): void;
   clearCache(): void;
 }
 
@@ -66,22 +67,24 @@ type BuildMutationOptions = {
   client?: Client;
 };
 
-export const buildQuery: (queryText: string, variables?: any, options?: BuildQueryOptions) => QueryPacket;
-export const buildMutation: (mutationText: string, options?: BuildQueryOptions) => MutationPacket;
+export function buildQuery(queryText: string, variables?: any, options?: BuildQueryOptions): QueryPacket;
 
-type IReactComponent<P = any> = StatelessComponent<P> | ComponentClass<P> | ClassicComponentClass<P>;
+export function buildMutation(mutationText: string, options?: BuildQueryOptions): MutationPacket;
 
-export const compress: any;
-export const setDefaultClient: (client: Client) => void;
-export const getDefaultClient: () => Client;
+export function compress(strings: TemplateStringsArray, ...expressions: any[]): string;
 
-export function useQuery(queryPacket: QueryPacket): QueryPayload;
+export function setDefaultClient(client: Client): void;
 
-export function useMutation(mutationPacket: MutationPacket): MutationPayload;
+export function getDefaultClient(): Client;
+
+export function useQuery<Data, Error = any>(queryPacket: QueryPacket): QueryPayload<Data, Error>;
+
+export function useMutation<Response>(mutationPacket: MutationPacket): MutationPayload<Response>;
 
 type RenderProps<Query, Mutation> = Record<keyof Query, QueryPayload> & Record<keyof Mutation, MutationPayload>;
 
 type QueryMap = { [s: string]: QueryPacket };
+
 type MutationMap = { [s: string]: MutationPacket };
 
 type ComponentPacket<Query extends QueryMap, Mutation extends MutationMap> = {
